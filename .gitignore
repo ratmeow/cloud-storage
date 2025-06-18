@@ -1,0 +1,8 @@
+.venv/
+.idea/
+pycache/
+.log
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.env
