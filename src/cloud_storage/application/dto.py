@@ -10,6 +10,6 @@ class UserRegisterData:
 
 @dataclass
 class SessionDTO:
-    id_: uuid.UUID
+    id: uuid.UUID
     user_id: uuid.UUID
     expired_ts: datetime.datetime

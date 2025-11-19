@@ -1,6 +1,7 @@
 version: "3.9"
 
 services:
+
   test-database:
     container_name: test-cloud-postgres
     image: "postgres:16-alpine"
@@ -16,6 +17,7 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
   test-cache:
     image: redis:7.2
     container_name: test-cloud-redis
