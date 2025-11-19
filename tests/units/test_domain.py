@@ -8,7 +8,7 @@ class TestUser:
     def test_user_create(self):
         user = User(login="ratmeow", hashed_password="289sdyf87sf")
         assert user.login == "ratmeow"
-        assert user.id_ is not None
+        assert user.id is not None
 
     def test_user_invalid_login(self):
         with pytest.raises(DomainError, match="Login must be"):

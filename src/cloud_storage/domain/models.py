@@ -10,7 +10,7 @@ import re
 class User:
     login: str
     hashed_password: str
-    id_: uuid.UUID = field(default_factory=uuid.uuid4)
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
 
     def __post_init__(self):
         self.validate()

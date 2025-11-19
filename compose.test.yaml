@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  test-database:
+    container_name: test-cloud-postgres
+    image: "postgres:16-alpine"
+    ports:
+      - ${POSTGRES_PORT}:5432
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+  test-cache:
+    image: redis:7.2
+    container_name: test-cloud-redis
+    ports:
+      - ${REDIS_PORT}:6379
