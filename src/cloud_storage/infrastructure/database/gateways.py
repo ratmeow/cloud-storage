@@ -14,5 +14,9 @@ class PgUserGateway(UserGateway):
         user = result.scalar_one_or_none()
         return user
 
+    async def get_by_id(self, user_id: str) -> User | None:
+        user = await self.db_session.get(User, user_id)
+        return user
+
     async def save(self, user: User) -> None:
         self.db_session.add(user)

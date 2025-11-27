@@ -25,6 +25,10 @@ class User:
         pattern = r"^[A-Za-z\d!@#$%^&*]{3,}$"
         return bool(re.fullmatch(pattern, login))
 
+    @property
+    def root_path(self) -> Path:
+        return Path(f"user-{str(self.id)}-files/")
+
 
 
 class ResourceType(Enum):
@@ -33,87 +37,43 @@ class ResourceType(Enum):
 
 
 @dataclass
-class ResourceMetadata:
+class Resource:
     path: Path
     type: ResourceType
-    size: int | None
-    created_at: datetime
-    modified_at: datetime
-    content_type: str | None = None
+    size: int | None = None
 
     def __post_init__(self):
         self.validate()
 
     def validate(self):
-        if self.type == ResourceType.DIRECTORY and self.size is not None:
-            raise DomainError("Directory cannot have size")
+        if self.type == ResourceType.FILE:
+            if self.size is None:
+                raise ValueError("File must have size")
+            if self.path.is_directory:
+                raise ValueError("File path cannot end with /")
 
-        if self.type == ResourceType.FILE and self.size is None:
-            raise DomainError("File must have size")
-
-        if self.size is not None and self.size < 0:
-            raise DomainError("Resource size cannot be negative")
-
-        if self.type == ResourceType.FILE and not self.content_type:
-            raise DomainError("File must have content_type")
-
-        if self.type == ResourceType.DIRECTORY and self.content_type:
-            raise DomainError("Directory cannot have content_type")
-
-        if self.created_at > self.modified_at:
-            raise DomainError("created_at cannot be after modified_at")
+        if self.type == ResourceType.DIRECTORY:
+            if self.size is not None:
+                raise ValueError("Directory cannot have size")
+            if not self.path.is_directory:
+                raise ValueError("Directory path must end with /")
 
     @property
-    def is_file(self) -> bool:
-        return self.type == ResourceType.FILE
+    def name(self) -> str:
+        return self.path.name
 
     @property
-    def is_directory(self) -> bool:
-        return self.type == ResourceType.DIRECTORY
+    def parent_path(self) -> Path:
+        return self.path.parent
 
 
-@dataclass
-class DirectoryContent:
-    path: Path
-    items: list[ResourceMetadata]
-
-    def __post_init__(self):
-        self.validate()
-
-    def validate(self):
-        for item in self.items:
-            if item.path.parent != self.path:
-                raise DomainError(
-                    f"Item {item.path.value} is not a direct child of {self.path.value}"
-                )
-
-        paths = [item.path for item in self.items]
-        if len(paths) != len(set(paths)):
-            raise DomainError("Directory content contains duplicate paths")
-
-    @property
-    def files(self) -> list[ResourceMetadata]:
-        return [item for item in self.items if item.is_file]
-
-    @property
-    def directories(self) -> list[ResourceMetadata]:
-        return [item for item in self.items if item.is_directory]
-
-    @property
-    def total_size(self) -> int:
-        # не рекурсивно
-        return sum(item.size for item in self.files if item.size is not None)
-
-    @property
-    def is_empty(self) -> bool:
-        return len(self.items) == 0
-
-    def find_by_name(self, name: str) -> ResourceMetadata | None:
-        for item in self.items:
-            if item.path.name == name:
-                return item
-        return None
-
-    def contains(self, name: str) -> bool:
-        return self.find_by_name(name) is not None
+    def to_dict(self) -> dict:
+        result = {
+            "path": str(self.parent_path),
+            "name": self.name,
+            "type": self.type.value
+        }
+        if self.size is not None:
+            result["size"] = self.size
+        return result
 

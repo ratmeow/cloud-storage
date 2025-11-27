@@ -21,8 +21,14 @@ class WrongPasswordError(ApplicationError):
             message=f"Wrong Password!"
         )
 
-class UserAlreadyExists(ApplicationError):
+class AlreadyExistsError(ApplicationError):
+    def __init__(self, spec: str = ""):
+        super().__init__(
+            message=f"{spec} already exists"
+        )
+
+class NotDirectoryError(ApplicationError):
     def __init__(self):
         super().__init__(
-            message=f"User with that login already exists"
+            message=f"Resource path is not directory"
         )
