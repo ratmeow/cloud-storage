@@ -1,7 +1,9 @@
 import pytest
+
+from cloud_storage.domain.exceptions import DomainError
 from cloud_storage.domain.models import Resource, ResourceType, User
 from cloud_storage.domain.value_objects import Path
-from cloud_storage.domain.exceptions import DomainError
+
 
 class TestUser:
     def test_create(self):
@@ -13,6 +15,7 @@ class TestUser:
     def test_invalid_login(self):
         with pytest.raises(DomainError, match="Login must be"):
             User(login="ba", hashed_password="79df8gd")
+
 
 class TestPath:
     def test_valid(self):
@@ -72,15 +75,9 @@ class TestPath:
         assert file_relative_path.value == "folder2/test.txt"
 
 
-
 class TestResource:
-
     def test_valid_file(self):
-        res = Resource(
-            path=Path("file.txt"),
-            type=ResourceType.FILE,
-            size=1024
-        )
+        res = Resource(path=Path("file.txt"), type=ResourceType.FILE, size=1024)
         assert res.name == "file.txt"
 
     def test_valid_directory(self):
@@ -91,4 +88,3 @@ class TestResource:
         )
 
         assert res.name == "folder"
-

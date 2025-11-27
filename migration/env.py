@@ -1,13 +1,12 @@
 import asyncio
 from logging.config import fileConfig
 from os import environ
-from dotenv import load_dotenv
 
+from alembic import context
+from dotenv import load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-
-from alembic import context
 
 from cloud_storage.config import PostgresConfig
 from cloud_storage.infrastructure.database.orm import mapper_registry

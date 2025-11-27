@@ -1,6 +1,8 @@
 import io
 import zipfile
+
 from cloud_storage.domain.value_objects import Path
+
 
 class ZipGateway:
     async def archive(self, folder: list[tuple[Path, bytes]]) -> bytes:

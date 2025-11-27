@@ -1,10 +1,12 @@
+import re
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from .value_objects import Path
+
 from .exceptions import DomainError
-import uuid
-import re
+from .value_objects import Path
+
 
 @dataclass
 class User:
@@ -17,8 +19,10 @@ class User:
 
     def validate(self):
         if not self._is_valid_login(self.login):
-            raise DomainError("Login must be at least 3 characters long, "
-            "with only Latin letters, digits and special character(!@#$%^&*).")
+            raise DomainError(
+                "Login must be at least 3 characters long, "
+                "with only Latin letters, digits and special character(!@#$%^&*)."
+            )
 
     @staticmethod
     def _is_valid_login(login: str) -> bool:
@@ -28,7 +32,6 @@ class User:
     @property
     def root_path(self) -> Path:
         return Path(f"user-{str(self.id)}-files/")
-
 
 
 class ResourceType(Enum):
@@ -66,14 +69,8 @@ class Resource:
     def parent_path(self) -> Path:
         return self.path.parent
 
-
     def to_dict(self) -> dict:
-        result = {
-            "path": str(self.parent_path),
-            "name": self.name,
-            "type": self.type.value
-        }
+        result = {"path": str(self.parent_path), "name": self.name, "type": self.type.value}
         if self.size is not None:
             result["size"] = self.size
         return result
-

@@ -1,9 +1,10 @@
 import uuid
 from typing import Protocol
-from cloud_storage.domain.models import User, Resource
-from .dto import SessionDTO
+
+from cloud_storage.domain.models import Resource, User
 from cloud_storage.domain.value_objects import Path
 
+from .dto import SessionDTO
 
 
 class Hasher(Protocol):
@@ -12,6 +13,7 @@ class Hasher(Protocol):
 
     def verify_hash(self, original_text: str, hashed_text: str) -> bool:
         pass
+
 
 class DBSession(Protocol):
     async def commit(self) -> None:

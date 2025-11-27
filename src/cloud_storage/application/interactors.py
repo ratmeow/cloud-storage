@@ -1,11 +1,18 @@
+import re
 import uuid
 
-from .interfaces import UserGateway, Hasher, DBSession, SessionGateway, FileStorageGateway, ArchiveGateway
-from .dto import UserRegisterData, SessionDTO, UploadFileDTO, MoveResourceDTO
-from .exceptions import PasswordRequirementError, NotFoundError, WrongPasswordError, AlreadyExistsError, NotDirectoryError
-from cloud_storage.domain.models import User, Resource, ResourceType
+from cloud_storage.domain.models import Resource, ResourceType, User
 from cloud_storage.domain.value_objects import Path
-import re
+
+from .dto import MoveResourceDTO, SessionDTO, UploadFileDTO, UserRegisterData
+from .exceptions import (
+    AlreadyExistsError,
+    NotDirectoryError,
+    NotFoundError,
+    PasswordRequirementError,
+    WrongPasswordError,
+)
+from .interfaces import ArchiveGateway, DBSession, FileStorageGateway, Hasher, SessionGateway, UserGateway
 
 
 class RegisterUserInteractor:
@@ -18,8 +25,7 @@ class RegisterUserInteractor:
         if not self._is_strong_password(password=register_data.password):
             raise PasswordRequirementError()
 
-        user = User(login=register_data.login,
-                    hashed_password=self.hasher.hash(text=register_data.password))
+        user = User(login=register_data.login, hashed_password=self.hasher.hash(text=register_data.password))
 
         if await self.user_gateway.get_by_login(login=register_data.login) is not None:
             raise AlreadyExistsError()
@@ -33,12 +39,12 @@ class RegisterUserInteractor:
         has_required_char = bool(re.search(r"[\d!@#$%^&*_]", password))
         return bool(re.fullmatch(pattern, password)) and has_required_char
 
+
 class LoginUserInteractor:
     def __init__(self, user_gateway: UserGateway, hasher: Hasher, session_gateway: SessionGateway):
         self.user_gateway = user_gateway
         self.hasher = hasher
         self.session_gateway = session_gateway
-
 
     async def __call__(self, login_data: UserRegisterData) -> SessionDTO:
         exist_user = await self.user_gateway.get_by_login(login=login_data.login)
@@ -51,12 +57,14 @@ class LoginUserInteractor:
         session = await self.session_gateway.create(user_id=exist_user.id)
         return session
 
+
 class LogoutUserInteractor:
     def __init__(self, session_gateway: SessionGateway):
         self.session_gateway = session_gateway
 
     async def __call__(self, session_id: str) -> None:
         return await self.session_gateway.delete(session_id=uuid.UUID(session_id))
+
 
 class GetResourceInteractor:
     def __init__(self, user_gateway: UserGateway, file_storage_gateway: FileStorageGateway):
@@ -76,10 +84,13 @@ class GetResourceInteractor:
         resource = Resource(
             path=resource_path,
             type=ResourceType.DIRECTORY if resource_path.is_directory else ResourceType.FILE,
-            size=None if resource_path.is_directory else await self.file_storage_gateway.get_file_size(path=resource_full_path)
+            size=None
+            if resource_path.is_directory
+            else await self.file_storage_gateway.get_file_size(path=resource_full_path),
         )
 
         return resource
+
 
 class DeleteResourceInteractor:
     def __init__(self, user_gateway: UserGateway, file_storage_gateway: FileStorageGateway):
@@ -98,8 +109,11 @@ class DeleteResourceInteractor:
 
         await self.file_storage_gateway.delete(path=resource_full_path)
 
+
 class DownloadResourceInteractor:
-    def __init__(self, user_gateway: UserGateway, file_storage_gateway: FileStorageGateway, archive_gateway: ArchiveGateway):
+    def __init__(
+        self, user_gateway: UserGateway, file_storage_gateway: FileStorageGateway, archive_gateway: ArchiveGateway
+    ):
         self.file_storage_gateway = file_storage_gateway
         self.user_gateway = user_gateway
         self.archive_gateway = archive_gateway
@@ -116,7 +130,10 @@ class DownloadResourceInteractor:
 
         if resource_path.is_directory:
             all_parts = await self.file_storage_gateway.list_directory_recursive(path=resource_full_path)
-            all_pairs = [(part.relative_to(resource_full_path), await self.file_storage_gateway.get_file(path=part)) for part in all_parts]
+            all_pairs = [
+                (part.relative_to(resource_full_path), await self.file_storage_gateway.get_file(path=part))
+                for part in all_parts
+            ]
             return await self.archive_gateway.archive(folder=all_pairs)
 
         return await self.file_storage_gateway.get_file(path=resource_full_path)
@@ -141,6 +158,7 @@ class UploadFileInteractor:
         resource = Resource(path=file_path, type=ResourceType.FILE, size=len(data.content))
         return resource
 
+
 class CreateDirectoryInteractor:
     def __init__(self, user_gateway: UserGateway, file_storage_gateway: FileStorageGateway):
         self.file_storage_gateway = file_storage_gateway
@@ -160,9 +178,8 @@ class CreateDirectoryInteractor:
             raise AlreadyExistsError(spec=f"Directory {str(directory_path)}")
 
         await self.file_storage_gateway.create_directory(path=directory_full_path)
-        return Resource(path=directory_path,
-                        type=ResourceType.DIRECTORY,
-                        size=None)
+        return Resource(path=directory_path, type=ResourceType.DIRECTORY, size=None)
+
 
 class ListDirectoryInteractor:
     def __init__(self, user_gateway: UserGateway, file_storage_gateway: FileStorageGateway):
@@ -188,7 +205,9 @@ class ListDirectoryInteractor:
             resource = Resource(
                 path=child_path.relative_to(base=user.root_path),
                 type=ResourceType.DIRECTORY if child_path.is_directory else ResourceType.FILE,
-                size=None if child_path.is_directory else await self.file_storage_gateway.get_file_size(path=child_path)
+                size=None
+                if child_path.is_directory
+                else await self.file_storage_gateway.get_file_size(path=child_path),
             )
             resources.append(resource)
 
@@ -209,10 +228,12 @@ class SearchResourceInteractor:
         result = []
         for res in all_res:
             if res.name == resource_name:
-                result.append(Resource(
-                    path=res.relative_to(user.root_path),
-                    type=ResourceType.DIRECTORY if res.is_directory else ResourceType.FILE,
-                    size=None if res.is_directory else await self.file_storage_gateway.get_file_size(path=res))
+                result.append(
+                    Resource(
+                        path=res.relative_to(user.root_path),
+                        type=ResourceType.DIRECTORY if res.is_directory else ResourceType.FILE,
+                        size=None if res.is_directory else await self.file_storage_gateway.get_file_size(path=res),
+                    )
                 )
 
         return result
@@ -236,14 +257,15 @@ class MoveResourceInteractor:
         if await self.file_storage_gateway.exists(path=target_path_full):
             raise AlreadyExistsError(spec=f"Directory {data.target_path}")
 
-        await self.file_storage_gateway.move(from_path=current_path_full,
-                                             to_path=target_path_full)
+        await self.file_storage_gateway.move(from_path=current_path_full, to_path=target_path_full)
 
         target_path = Path(data.target_path)
         resource = Resource(
             path=target_path,
             type=ResourceType.DIRECTORY if target_path.is_directory else ResourceType.FILE,
-            size=None if target_path.is_directory else await self.file_storage_gateway.get_file_size(path=target_path_full)
+            size=None
+            if target_path.is_directory
+            else await self.file_storage_gateway.get_file_size(path=target_path_full),
         )
 
         return resource

@@ -1,5 +1,6 @@
 import bcrypt
 
+
 class BcryptHasher:
     def hash(self, text: str) -> str:
         return bcrypt.hashpw(text.encode(), bcrypt.gensalt()).decode()

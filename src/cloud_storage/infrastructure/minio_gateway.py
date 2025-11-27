@@ -1,7 +1,9 @@
-from cloud_storage.config import MinioConfig
 from aiobotocore.client import AioBaseClient
 from botocore.exceptions import ClientError
+
+from cloud_storage.config import MinioConfig
 from cloud_storage.domain.value_objects import Path
+
 
 class MinioGateway:
     def __init__(self, client: AioBaseClient, config: MinioConfig):
@@ -23,7 +25,6 @@ class MinioGateway:
             dir_objects = await self.list_directory_recursive(path=path)
             for item in dir_objects:
                 await self._client.delete_object(Bucket=self._bucket, Key=str(item))
-
 
     async def exists(self, path: Path) -> bool:
         try:
@@ -48,7 +49,6 @@ class MinioGateway:
                 )
 
                 await self._client.delete_object(Bucket=self._bucket, Key=str(old_key))
-
 
     async def list_directory(self, path: Path) -> list[Path]:
         kwargs = {"Bucket": self._bucket, "Prefix": str(path), "Delimiter": "/"}

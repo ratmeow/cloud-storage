@@ -2,6 +2,7 @@ import datetime
 import uuid
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class UserRegisterData:
     login: str
@@ -14,11 +15,13 @@ class SessionDTO:
     user_id: uuid.UUID
     expired_ts: datetime.datetime
 
+
 @dataclass
 class UploadFileDTO:
     user_id: str
     target_path: str
     content: bytes
+
 
 @dataclass
 class MoveResourceDTO:
