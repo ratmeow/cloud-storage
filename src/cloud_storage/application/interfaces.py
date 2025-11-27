@@ -2,6 +2,7 @@ import uuid
 from typing import Protocol
 from cloud_storage.domain.models import User, Resource
 from .dto import SessionDTO
+from cloud_storage.domain.value_objects import Path
 
 
 
@@ -37,34 +38,34 @@ class SessionGateway(Protocol):
 
 
 class FileStorageGateway(Protocol):
-    async def save_file(self, storage_path: str, content: bytes) -> None:
+    async def save_file(self, path: Path, content: bytes) -> None:
         pass
 
-    async def get_file(self, storage_path: str) -> bytes:
+    async def get_file(self, path: Path) -> bytes:
         pass
 
-    async def delete(self, storage_path: str) -> None:
+    async def delete(self, path: Path) -> None:
         pass
 
-    async def exists(self, storage_path: str) -> bool:
+    async def exists(self, path: Path) -> bool:
         pass
 
-    async def move(self, from_path: str, to_path: str) -> None:
+    async def move(self, from_path: Path, to_path: Path) -> None:
         pass
 
-    async def list_directory(self, storage_path: str) -> list[str]:
+    async def list_directory(self, path: Path) -> list[Path]:
         pass
 
-    async def get_file_size(self, storage_path: str) -> int:
+    async def get_file_size(self, path: Path) -> int:
         pass
 
-    async def create_directory(self, storage_path: str) -> None:
+    async def create_directory(self, path: Path) -> None:
         pass
 
-    async def list_directory_recursive(self, storage_path: str) -> list[str]:
+    async def list_directory_recursive(self, path: Path) -> list[Path]:
         pass
 
 
 class ArchiveGateway(Protocol):
-    async def archive(self, folder: list) -> bytes:
+    async def archive(self, folder: list[tuple[Path, bytes]]) -> bytes:
         pass

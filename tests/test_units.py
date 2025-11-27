@@ -54,16 +54,23 @@ class TestPath:
         assert path.is_directory
         assert not path_file.is_directory
 
-    def test_append(self):
+    def test_join(self):
         path = Path("folder/")
         new_path = path.join("file.txt")
 
         assert new_path.name == "file.txt"
         assert new_path.parent.name == "folder"
 
-    def test_append_to_file(self):
+    def test_join_to_file(self):
         with pytest.raises(DomainError):
             Path("folder/file.txt").join("file1.txt")
+
+    def test_relative(self):
+        file_path = Path("folder1/folder2/test.txt")
+
+        file_relative_path = file_path.relative_to(Path("folder1/"))
+        assert file_relative_path.value == "folder2/test.txt"
+
 
 
 class TestResource:

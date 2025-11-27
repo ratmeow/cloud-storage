@@ -70,13 +70,13 @@ class GetResourceInteractor:
 
         resource_path = Path(value=path)
         resource_full_path = user.root_path.join(resource_path)
-        if not await self.file_storage_gateway.exists(storage_path=str(resource_full_path)):
+        if not await self.file_storage_gateway.exists(path=resource_full_path):
             raise NotFoundError(f"Resource with path = {str(resource_path)}")
 
         resource = Resource(
             path=resource_path,
             type=ResourceType.DIRECTORY if resource_path.is_directory else ResourceType.FILE,
-            size=None if resource_path.is_directory else await self.file_storage_gateway.get_file_size(str(resource_full_path))
+            size=None if resource_path.is_directory else await self.file_storage_gateway.get_file_size(path=resource_full_path)
         )
 
         return resource
@@ -93,10 +93,10 @@ class DeleteResourceInteractor:
 
         resource_path = Path(value=path)
         resource_full_path = user.root_path.join(resource_path)
-        if not await self.file_storage_gateway.exists(storage_path=str(resource_full_path)):
+        if not await self.file_storage_gateway.exists(path=resource_full_path):
             raise NotFoundError(f"Resource with path = {str(resource_path)}")
 
-        await self.file_storage_gateway.delete(str(resource_full_path))
+        await self.file_storage_gateway.delete(path=resource_full_path)
 
 class DownloadResourceInteractor:
     def __init__(self, user_gateway: UserGateway, file_storage_gateway: FileStorageGateway, archive_gateway: ArchiveGateway):
@@ -111,15 +111,16 @@ class DownloadResourceInteractor:
 
         resource_path = Path(value=path)
         resource_full_path = user.root_path.join(resource_path)
-        if not await self.file_storage_gateway.exists(storage_path=str(resource_full_path)):
+        if not await self.file_storage_gateway.exists(path=resource_full_path):
             raise NotFoundError(f"Resource with path = {str(resource_path)}")
 
-        if not resource_path.is_directory:
-            return await self.file_storage_gateway.get_file(storage_path=str(resource_full_path))
-        else:
-            all_parts = await self.file_storage_gateway.list_directory_recursive(storage_path=str(resource_full_path))
-            all_pairs = [(part, await self.file_storage_gateway.get_file(storage_path=str(resource_full_path.join(part)))) for part in all_parts]
+        if resource_path.is_directory:
+            all_parts = await self.file_storage_gateway.list_directory_recursive(path=resource_full_path)
+            all_pairs = [(part.relative_to(resource_full_path), await self.file_storage_gateway.get_file(path=part)) for part in all_parts]
             return await self.archive_gateway.archive(folder=all_pairs)
+
+        return await self.file_storage_gateway.get_file(path=resource_full_path)
+
 
 class UploadFileInteractor:
     def __init__(self, user_gateway: UserGateway, file_storage_gateway: FileStorageGateway):
@@ -133,19 +134,10 @@ class UploadFileInteractor:
 
         file_path = Path(value=data.target_path)
         file_path_full = user.root_path.join(file_path)
-        if await self.file_storage_gateway.exists(storage_path=str(file_path_full)):
+        if await self.file_storage_gateway.exists(path=file_path_full):
             raise AlreadyExistsError(spec=f"Resource {str(file_path)}")
 
-        file_path_buf = file_path
-        while not file_path_buf.is_root:
-            parent = file_path_buf.parent
-            parent_full_path = str(user.root_path.join(parent))
-            if await self.file_storage_gateway.exists(storage_path=parent_full_path):
-                break
-            await self.file_storage_gateway.create_directory(storage_path=parent_full_path)
-            file_path_buf = parent
-
-        await self.file_storage_gateway.save_file(storage_path=str(file_path_full), content=data.content)
+        await self.file_storage_gateway.save_file(path=file_path_full, content=data.content)
         resource = Resource(path=file_path, type=ResourceType.FILE, size=len(data.content))
         return resource
 
@@ -164,19 +156,10 @@ class CreateDirectoryInteractor:
             raise NotDirectoryError()
 
         directory_full_path = user.root_path.join(directory_path)
-        if await self.file_storage_gateway.exists(storage_path=str(directory_full_path)):
+        if await self.file_storage_gateway.exists(path=directory_full_path):
             raise AlreadyExistsError(spec=f"Directory {str(directory_path)}")
 
-        directory_path_buf = directory_path
-        while not directory_path_buf.is_root:
-            parent = directory_path_buf.parent
-            parent_full_path = str(user.root_path.join(parent))
-            if await self.file_storage_gateway.exists(storage_path=parent_full_path):
-                break
-            await self.file_storage_gateway.create_directory(storage_path=parent_full_path)
-            directory_path_buf = parent
-
-        await self.file_storage_gateway.create_directory(storage_path=str(directory_full_path))
+        await self.file_storage_gateway.create_directory(path=directory_full_path)
         return Resource(path=directory_path,
                         type=ResourceType.DIRECTORY,
                         size=None)
@@ -196,21 +179,16 @@ class ListDirectoryInteractor:
             raise NotDirectoryError()
 
         storage_path = user.root_path.join(directory_path)
-        if not await self.file_storage_gateway.exists(storage_path=str(storage_path)):
+        if not await self.file_storage_gateway.exists(path=storage_path):
             raise NotFoundError(f"Resource with path = {str(storage_path)}")
 
-        child_paths = await self.file_storage_gateway.list_directory(storage_path=str(storage_path))
+        child_paths = await self.file_storage_gateway.list_directory(path=storage_path)
         resources = []
         for child_path in child_paths:
-            user_path_value = child_path.replace(str(user.root_path), '', 1)
-            user_path = Path(user_path_value)
-
-            is_directory = child_path.endswith('/')
-
             resource = Resource(
-                path=user_path,
-                type=ResourceType.DIRECTORY if is_directory else ResourceType.FILE,
-                size=None if is_directory else await self.file_storage_gateway.get_file_size(child_path)
+                path=child_path.relative_to(base=user.root_path),
+                type=ResourceType.DIRECTORY if child_path.is_directory else ResourceType.FILE,
+                size=None if child_path.is_directory else await self.file_storage_gateway.get_file_size(path=child_path)
             )
             resources.append(resource)
 
@@ -227,16 +205,15 @@ class SearchResourceInteractor:
         if not user:
             raise NotFoundError(f"User with id={user_id}")
 
-        all_res = await self.file_storage_gateway.list_directory_recursive(storage_path=str(user.root_path))
-        founded_res = [res for res in all_res if resource_name == Path(res).name]
+        all_res = await self.file_storage_gateway.list_directory_recursive(path=user.root_path)
         result = []
-        for res in founded_res:
-            path = Path(res)
-            result.append(Resource(
-                path=path,
-                type=ResourceType.DIRECTORY if path.is_directory else ResourceType.FILE,
-                size=None if path.is_directory else await self.file_storage_gateway.get_file_size(str(user.root_path.join(res)))
-            ))
+        for res in all_res:
+            if res.name == resource_name:
+                result.append(Resource(
+                    path=res.relative_to(user.root_path),
+                    type=ResourceType.DIRECTORY if res.is_directory else ResourceType.FILE,
+                    size=None if res.is_directory else await self.file_storage_gateway.get_file_size(path=res))
+                )
 
         return result
 
@@ -251,22 +228,22 @@ class MoveResourceInteractor:
         if not user:
             raise NotFoundError(f"User with id={data.user_id}")
 
-        current_full_path = user.root_path.join(data.current_path)
-        target_full_path = user.root_path.join(data.target_path)
-        if not await self.file_storage_gateway.exists(storage_path=str(current_full_path)):
+        current_path_full = user.root_path.join(data.current_path)
+        target_path_full = user.root_path.join(data.target_path)
+        if not await self.file_storage_gateway.exists(path=current_path_full):
             raise NotFoundError(f"Resource with path = {str(data.current_path)}")
 
-        if await self.file_storage_gateway.exists(storage_path=str(target_full_path)):
+        if await self.file_storage_gateway.exists(path=target_path_full):
             raise AlreadyExistsError(spec=f"Directory {data.target_path}")
 
-        await self.file_storage_gateway.move(from_path=str(current_full_path),
-                                             to_path=str(target_full_path))
+        await self.file_storage_gateway.move(from_path=current_path_full,
+                                             to_path=target_path_full)
 
         target_path = Path(data.target_path)
         resource = Resource(
             path=target_path,
             type=ResourceType.DIRECTORY if target_path.is_directory else ResourceType.FILE,
-            size=None if target_path.is_directory else await self.file_storage_gateway.get_file_size(str(target_full_path))
+            size=None if target_path.is_directory else await self.file_storage_gateway.get_file_size(path=target_path_full)
         )
 
         return resource

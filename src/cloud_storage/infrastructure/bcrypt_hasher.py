@@ -1,7 +1,6 @@
-from cloud_storage.application.interfaces import Hasher
 import bcrypt
 
-class BcryptHasher(Hasher):
+class BcryptHasher:
     def hash(self, text: str) -> str:
         return bcrypt.hashpw(text.encode(), bcrypt.gensalt()).decode()
 

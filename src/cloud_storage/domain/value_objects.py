@@ -54,5 +54,22 @@ class Path:
         return Path(self.value + other.value)
 
 
+    def relative_to(self, base: 'Path') -> 'Path':
+        if not base.is_directory:
+            raise DomainError("Base must be directory!")
+
+        if base.is_root:
+            return self
+
+        if not self.value.startswith(base.value):
+            raise DomainError(f"Path '{self.value}' is not inside base '{base.value}'")
+
+        relative = self.value[len(base.value):]
+        return Path(relative)
+
+
     def __str__(self) -> str:
         return self.value
+
+    def __eq__(self, other: 'Path') -> bool:
+        return self.value == other.value

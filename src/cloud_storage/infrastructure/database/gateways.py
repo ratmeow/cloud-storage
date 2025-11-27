@@ -1,10 +1,9 @@
-from cloud_storage.application.interfaces import UserGateway
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from cloud_storage.domain.models import User
 
 
-class PgUserGateway(UserGateway):
+class PgUserGateway:
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
 

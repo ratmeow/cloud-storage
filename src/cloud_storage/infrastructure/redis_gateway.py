@@ -5,7 +5,6 @@ from redis.asyncio import Redis
 import logging
 
 from cloud_storage.application.dto import SessionDTO
-from cloud_storage.application.interfaces import SessionGateway
 from cloud_storage.config import RedisConfig
 
 logger = logging.getLogger(__name__)
@@ -17,7 +16,7 @@ class SessionNotFoundError(Exception):
     pass
 
 
-class RedisSessionGateway(SessionGateway):
+class RedisSessionGateway:
     def __init__(self, redis_client: Redis, config: RedisConfig):
         self.redis_client = redis_client
         self.lifetime = config.session_lifetime
