@@ -16,6 +16,7 @@ asyncpg = "^0.30.0"
 alembic = "^1.17.1"
 redis = "^7.0.1"
 aioboto3 = "^15.5.0"
+asynczipstream = "^1.0.1"
 
 
 [tool.poetry.group.test.dependencies]

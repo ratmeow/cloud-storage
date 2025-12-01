@@ -1,5 +1,5 @@
 import uuid
-from typing import Protocol
+from typing import AsyncIterator, Protocol
 
 from cloud_storage.domain.models import Resource, User
 from cloud_storage.domain.value_objects import Path
@@ -46,6 +46,9 @@ class FileStorageGateway(Protocol):
     async def get_file(self, path: Path) -> bytes:
         pass
 
+    async def get_file_stream(self, path: Path) -> AsyncIterator[bytes]:
+        pass
+
     async def delete(self, path: Path) -> None:
         pass
 
@@ -69,5 +72,8 @@ class FileStorageGateway(Protocol):
 
 
 class ArchiveGateway(Protocol):
-    async def archive(self, folder: list[tuple[Path, bytes]]) -> bytes:
+    async def archive(self, files: list[tuple[Path, bytes]]) -> bytes:
+        pass
+
+    def archive_stream(self, files: AsyncIterator[tuple[Path, AsyncIterator[bytes]]]) -> AsyncIterator[bytes]:
         pass

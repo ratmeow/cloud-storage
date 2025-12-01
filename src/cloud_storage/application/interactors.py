@@ -1,5 +1,6 @@
 import re
 import uuid
+from typing import AsyncIterable, AsyncIterator
 
 from cloud_storage.domain.models import Resource, ResourceType, User
 from cloud_storage.domain.value_objects import Path
@@ -118,7 +119,7 @@ class DownloadResourceInteractor:
         self.user_gateway = user_gateway
         self.archive_gateway = archive_gateway
 
-    async def __call__(self, path: str, user_id: str) -> bytes:
+    async def __call__(self, path: str, user_id: str) -> AsyncIterator[bytes]:
         user = await self.user_gateway.get_by_id(user_id=user_id)
         if not user:
             raise NotFoundError(f"User with id={user_id}")
@@ -130,13 +131,15 @@ class DownloadResourceInteractor:
 
         if resource_path.is_directory:
             all_parts = await self.file_storage_gateway.list_directory_recursive(path=resource_full_path)
-            all_pairs = [
-                (part.relative_to(resource_full_path), await self.file_storage_gateway.get_file(path=part))
-                for part in all_parts
-            ]
-            return await self.archive_gateway.archive(folder=all_pairs)
 
-        return await self.file_storage_gateway.get_file(path=resource_full_path)
+            async def iterator() -> AsyncIterator[tuple[Path, AsyncIterator[bytes]]]:
+                for part in all_parts:
+                    rel_path = part.relative_to(resource_full_path)
+                    yield rel_path, self.file_storage_gateway.get_file_stream(path=part)
+
+            return self.archive_gateway.archive_stream(files=iterator())
+
+        return self.file_storage_gateway.get_file_stream(path=resource_full_path)
 
 
 class UploadFileInteractor:

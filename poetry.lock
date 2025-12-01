@@ -328,6 +328,20 @@ gssauth = ["gssapi", "sspilib"]
 test = ["distro (>=1.9.0,<1.10.0)", "flake8 (>=6.1,<7.0)", "flake8-pyi (>=24.1.0,<24.2.0)", "gssapi", "k5test", "mypy (>=1.8.0,<1.9.0)", "sspilib", "uvloop (>=0.15.3)"]
 
 [[package]]
+name = "asynczipstream"
+version = "1.0.1"
+description = "Asynchronous Zipfile generator that takes input files as well as streams"
+optional = false
+python-versions = "*"
+files = [
+    {file = "asynczipstream-1.0.1-py3-none-any.whl", hash = "sha256:a57f78fb36054450f57472f3f10b3b15ba93cd2547a0055a1e7b08a78f82674d"},
+    {file = "asynczipstream-1.0.1.tar.gz", hash = "sha256:800fa0d9849e8ea46dcac8f283b0efe70d86e0f5a7c441c1896a068b94c3c2ed"},
+]
+
+[package.dependencies]
+aiofiles = ">22.1.0"
+
+[[package]]
 name = "attrs"
 version = "25.4.0"
 description = "Classes Without Boilerplate"
@@ -1995,4 +2009,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "c80808d8b4ff9509bebd6bf08f921f700c9cad4610013bae657e16d294799ef4"
+content-hash = "d7a526074c59f86165af1b541594f097486d6142edf19ba0c804779c8eec48af"

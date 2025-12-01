@@ -1,3 +1,5 @@
+from typing import AsyncIterator
+
 from aiobotocore.client import AioBaseClient
 from botocore.exceptions import ClientError
 
@@ -9,6 +11,7 @@ class MinioGateway:
     def __init__(self, client: AioBaseClient, config: MinioConfig):
         self._client = client
         self._bucket = config.bucket
+        self._chunk_size = 64 * 1024
 
     async def save_file(self, path: Path, content: bytes) -> None:
         await self._create_parents(path=path)
@@ -18,6 +21,15 @@ class MinioGateway:
         resp = await self._client.get_object(Bucket=self._bucket, Key=str(path))
         data = await resp["Body"].read()
         return data
+
+    async def get_file_stream(self, path: Path) -> AsyncIterator[bytes]:
+        resp = await self._client.get_object(Bucket=self._bucket, Key=str(path))
+        body = resp["Body"]
+        while True:
+            chunk = await body.read(self._chunk_size)
+            if not chunk:
+                break
+            yield chunk
 
     async def delete(self, path: Path) -> None:
         await self._client.delete_object(Bucket=self._bucket, Key=str(path))

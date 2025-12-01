@@ -1,6 +1,7 @@
 import io
 import uuid
 import zipfile
+from typing import AsyncIterator
 
 import pytest
 import pytest_asyncio
@@ -363,6 +364,12 @@ class TestListDirectory:
 
 
 class TestDownloadResource:
+    async def stream_to_bytes(self, async_iter: AsyncIterator[bytes]) -> bytes:
+        parts = []
+        async for chunk in async_iter:
+            parts.append(chunk)
+        return b"".join(parts)
+
     @pytest.mark.asyncio
     async def test_file(
         self,
@@ -378,7 +385,8 @@ class TestDownloadResource:
         result = await interactor(path=file_path, user_id=str(exists_user.id))
 
         assert result is not None
-        assert result == b"Hello"
+        data = await self.stream_to_bytes(async_iter=result)
+        assert data == b"Hello"
 
     @pytest.mark.asyncio
     async def test_directory(
@@ -395,12 +403,13 @@ class TestDownloadResource:
         archive = await interactor(path=dir_path, user_id=str(exists_user.id))
 
         assert archive is not None
-        archive_bytes = io.BytesIO(archive)
-        with zipfile.ZipFile(archive_bytes, "r") as zipf:
+        archive_bytes = await self.stream_to_bytes(archive)
+        archive_buf = io.BytesIO(archive_bytes)
+        with zipfile.ZipFile(archive_buf, "r") as zipf:
             names = zipf.namelist()
 
             assert "test.txt" in names
-            assert "folder2/" in names
+            assert "folder2" in names
 
 
 class TestSearchResource:
