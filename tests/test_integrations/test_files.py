@@ -6,14 +6,13 @@ from typing import AsyncIterator
 import pytest
 import pytest_asyncio
 from aiobotocore.client import AioBaseClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from cloud_storage.application.dto import MoveResourceDTO, UploadFileDTO, UserRegisterData
+from cloud_storage.application.dto import MoveResourceDTO, UploadFileDTO
 from cloud_storage.application.exceptions import (
     AlreadyExistsError,
     NotDirectoryError,
     NotFoundError,
-    WrongPasswordError,
 )
 from cloud_storage.application.interactors import (
     CreateDirectoryInteractor,
@@ -27,7 +26,6 @@ from cloud_storage.application.interactors import (
 )
 from cloud_storage.config import Config
 from cloud_storage.domain.models import ResourceType, User
-from cloud_storage.domain.value_objects import Path
 from cloud_storage.infrastructure.database.gateways import PgUserGateway
 from cloud_storage.infrastructure.minio_gateway import MinioGateway
 from cloud_storage.infrastructure.zip_gateway import ZipGateway
