@@ -1,9 +1,6 @@
-version: "3.9"
-
 services:
 
   test-postgres:
-    container_name: test-cloud-postgres
     image: "postgres:16-alpine"
     ports:
       - ${POSTGRES_PORT}:5432
@@ -20,13 +17,11 @@ services:
 
   test-redis:
     image: redis:7.2
-    container_name: test-cloud-redis
     ports:
       - ${REDIS_PORT}:6379
 
   test-minio:
     image: minio/minio
-    container_name: test-cloud-minio
     entrypoint: sh
     command: >
       -c 'mkdir -p /data/"${MINIO_BUCKET}"
@@ -39,3 +34,23 @@ services:
       MINIO_ROOT_PASSWORD: "${MINIO_PASSWORD}"
       MINIO_ADDRESS: ":${MINIO_PORT}"
       MINIO_CONSOLE_ADDRESS: ":${MINIO_CONSOLE_PORT}"
+
+  test-backend:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    env_file:
+      - test.env
+    environment:
+      POSTGRES_HOST: test-postgres
+      POSTGRES_PORT: 5432
+      REDIS_HOST: test-redis
+      MINIO_HOST: test-minio
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+      test-redis:
+        condition: service_started
+      test-minio:
+        condition: service_started

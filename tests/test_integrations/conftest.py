@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, AsyncIterable, Union
+from typing import AsyncIterable
 
 import aioboto3
 import pytest
@@ -19,7 +19,7 @@ from cloud_storage.infrastructure.zip_gateway import ZipGateway
 
 @pytest.fixture(scope="session")
 def config() -> Config:
-    return Config.from_env("test.env")
+    return Config.from_env()
 
 
 @pytest_asyncio.fixture
