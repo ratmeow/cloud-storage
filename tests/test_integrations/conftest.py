@@ -19,7 +19,7 @@ from cloud_storage.infrastructure.zip_gateway import ZipGateway
 
 @pytest.fixture(scope="session")
 def config() -> Config:
-    return Config.from_env()
+    return Config()
 
 
 @pytest_asyncio.fixture
