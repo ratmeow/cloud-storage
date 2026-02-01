@@ -1,6 +1,5 @@
 from os import environ
 
-from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 
@@ -35,11 +34,6 @@ class MinioConfig(BaseModel):
 
 
 class Config(BaseModel):
-    postgres: PostgresConfig
-    redis: RedisConfig
-    minio: MinioConfig
-
-    @classmethod
-    def from_env(cls, env_path=".env"):
-        load_dotenv(env_path, override=True)
-        return cls(postgres=PostgresConfig(**environ), redis=RedisConfig(**environ), minio=MinioConfig(**environ))
+    postgres: PostgresConfig = Field(default_factory=lambda: PostgresConfig(**environ))
+    redis: RedisConfig = Field(default_factory=lambda: RedisConfig(**environ))
+    minio: MinioConfig = Field(default_factory=lambda: MinioConfig(**environ))

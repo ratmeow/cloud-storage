@@ -1,0 +1,19 @@
+FROM python:3.12-alpine
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV  PYTHONUNBUFFERED=1
+
+RUN pip install --no-cache-dir poetry>=1.6.1 \
+    && poetry config virtualenvs.create false \
+    && poetry config installer.parallel false
+
+WORKDIR /app
+COPY pyproject.toml poetry.lock README.md ./
+
+RUN poetry install --no-root
+
+COPY . .
+
+RUN poetry install --only-root
+
+CMD pytest tests/
