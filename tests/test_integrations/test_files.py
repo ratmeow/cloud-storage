@@ -408,6 +408,8 @@ class TestDownloadResource:
 
             assert "test.txt" in names
             assert "folder2" in names
+            file_content = zipf.read("test.txt")
+            assert file_content == b"Hello"
 
 
 class TestSearchResource:
