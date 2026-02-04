@@ -3,9 +3,9 @@ import uuid
 import pytest
 from redis.asyncio import Redis
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from cloud_storage.application.dto import UploadFileDTO, UserRegisterData
+from cloud_storage.application.dto import UserRegisterData
 from cloud_storage.application.exceptions import (
     AlreadyExistsError,
     NotFoundError,

@@ -1,7 +1,6 @@
 import re
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 
 from .exceptions import DomainError

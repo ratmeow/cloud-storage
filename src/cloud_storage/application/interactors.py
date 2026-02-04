@@ -1,6 +1,6 @@
 import re
 import uuid
-from typing import AsyncIterable, AsyncIterator
+from typing import AsyncIterator
 
 from cloud_storage.domain.models import Resource, ResourceType, User
 from cloud_storage.domain.value_objects import Path

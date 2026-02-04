@@ -1,7 +1,7 @@
 import uuid
 from typing import AsyncIterator, Protocol
 
-from cloud_storage.domain.models import Resource, User
+from cloud_storage.domain.models import User
 from cloud_storage.domain.value_objects import Path
 
 from .dto import SessionDTO
