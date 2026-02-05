@@ -6,12 +6,13 @@ import pytest_asyncio
 from aiobotocore.client import AioBaseClient
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import registry
 
 from cloud_storage.application.interfaces import DBSession
 from cloud_storage.config import Config
 from cloud_storage.infrastructure.bcrypt_hasher import BcryptHasher
 from cloud_storage.infrastructure.database.gateways import PgUserGateway
-from cloud_storage.infrastructure.database.orm import mapper_registry
+from cloud_storage.infrastructure.database.orm import create_mapper_registry
 from cloud_storage.infrastructure.minio_gateway import MinioGateway
 from cloud_storage.infrastructure.redis_gateway import RedisSessionGateway
 from cloud_storage.infrastructure.zip_gateway import ZipGateway
@@ -22,8 +23,13 @@ def config() -> Config:
     return Config()
 
 
+@pytest.fixture(scope="session")
+def mapper_registry() -> registry:
+    return create_mapper_registry()
+
+
 @pytest_asyncio.fixture
-async def session_maker_pg(config: Config) -> async_sessionmaker[AsyncSession | DBSession]:
+async def session_maker_pg(config: Config, mapper_registry: registry) -> async_sessionmaker[AsyncSession | DBSession]:
     engine = create_async_engine(url=config.postgres.pg_async_url)
     async with engine.begin() as conn:
         await conn.run_sync(mapper_registry.metadata.drop_all)

@@ -3,19 +3,17 @@ from logging.config import fileConfig
 from os import environ
 
 from alembic import context
-from dotenv import load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from cloud_storage.config import PostgresConfig
-from cloud_storage.infrastructure.database.orm import mapper_registry
+from cloud_storage.infrastructure.database.orm import create_mapper_registry
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-load_dotenv(override=True)
 pg_config = PostgresConfig(**environ)
 config.set_main_option("sqlalchemy.url", pg_config.pg_async_url)
 # Interpret the config file for Python logging.
@@ -27,7 +25,8 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = mapper_registry.metadata
+registry = create_mapper_registry()
+target_metadata = registry.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
