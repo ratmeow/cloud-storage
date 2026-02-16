@@ -1,4 +1,3 @@
-import uuid
 from typing import AsyncIterator, Protocol
 
 from cloud_storage.domain.models import User
@@ -32,10 +31,13 @@ class UserGateway(Protocol):
 
 
 class SessionGateway(Protocol):
-    async def create(self, user_id: uuid.UUID) -> SessionDTO:
+    async def create(self, user_id: str) -> SessionDTO:
         pass
 
-    async def delete(self, session_id: uuid.UUID) -> None:
+    async def get_user_id(self, session_id: str) -> str:
+        pass
+
+    async def delete(self, session_id: str) -> None:
         pass
 
 

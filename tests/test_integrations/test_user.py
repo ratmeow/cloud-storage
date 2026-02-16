@@ -1,7 +1,6 @@
 import uuid
 
 import pytest
-from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,12 +11,11 @@ from cloud_storage.application.exceptions import (
     PasswordRequirementError,
     WrongPasswordError,
 )
-from cloud_storage.application.interactors import LoginUserInteractor, LogoutUserInteractor, RegisterUserInteractor
+from cloud_storage.application.interactors import LoginUserInteractor, RegisterUserInteractor
 from cloud_storage.application.interfaces import DBSession
 from cloud_storage.domain.models import User
 from cloud_storage.infrastructure.bcrypt_hasher import BcryptHasher
 from cloud_storage.infrastructure.database.gateways import PgUserGateway
-from cloud_storage.infrastructure.redis_gateway import RedisSessionGateway
 
 
 @pytest.fixture
@@ -28,15 +26,8 @@ def register_user_interactor(
 
 
 @pytest.fixture
-def login_user_interactor(
-    hasher: BcryptHasher, pg_user_gateway: PgUserGateway, redis_session_gateway: RedisSessionGateway
-) -> LoginUserInteractor:
-    return LoginUserInteractor(user_gateway=pg_user_gateway, hasher=hasher, session_gateway=redis_session_gateway)
-
-
-@pytest.fixture
-def logout_user_interactor(redis_session_gateway: RedisSessionGateway) -> LogoutUserInteractor:
-    return LogoutUserInteractor(session_gateway=redis_session_gateway)
+def login_user_interactor(hasher: BcryptHasher, pg_user_gateway: PgUserGateway) -> LoginUserInteractor:
+    return LoginUserInteractor(user_gateway=pg_user_gateway, hasher=hasher)
 
 
 class TestRegisterUser:
@@ -79,11 +70,7 @@ class TestRegisterUser:
 class TestLoginUser:
     @pytest.mark.asyncio
     async def test_success(
-        self,
-        login_user_interactor: LoginUserInteractor,
-        pg_session: AsyncSession,
-        hasher: BcryptHasher,
-        redis_client: Redis,
+        self, login_user_interactor: LoginUserInteractor, pg_session: AsyncSession, hasher: BcryptHasher
     ):
         user_id = uuid.UUID(int=1)
         login = "test"
@@ -96,9 +83,7 @@ class TestLoginUser:
 
         result = await interactor(login_data=data)
 
-        assert result.user_id == user_id
-        session = await redis_client.get(name=str(result.id))
-        assert session is not None
+        assert result == str(user_id)
 
     @pytest.mark.asyncio
     async def test_login_not_exists(self, login_user_interactor: LoginUserInteractor):
@@ -126,21 +111,3 @@ class TestLoginUser:
 
         with pytest.raises(WrongPasswordError):
             await interactor(login_data=data)
-
-
-class TestLogoutUser:
-    @pytest.mark.asyncio
-    async def test_success(
-        self,
-        logout_user_interactor: LogoutUserInteractor,
-        redis_session_gateway: RedisSessionGateway,
-        redis_client: Redis,
-    ):
-        user_id = uuid.UUID(int=1)
-        session = await redis_session_gateway.create(user_id=user_id)
-        interactor = logout_user_interactor
-
-        await interactor(session_id=str(session.id))
-
-        session = await redis_client.get(name=str(session.id))
-        assert session is None

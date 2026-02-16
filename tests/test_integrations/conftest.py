@@ -4,7 +4,6 @@ import aioboto3
 import pytest
 import pytest_asyncio
 from aiobotocore.client import AioBaseClient
-from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import registry
 
@@ -14,7 +13,6 @@ from cloud_storage.infrastructure.bcrypt_hasher import BcryptHasher
 from cloud_storage.infrastructure.database.gateways import PgUserGateway
 from cloud_storage.infrastructure.database.orm import create_mapper_registry
 from cloud_storage.infrastructure.minio_gateway import MinioGateway
-from cloud_storage.infrastructure.redis_gateway import RedisSessionGateway
 from cloud_storage.infrastructure.zip_gateway import ZipGateway
 
 
@@ -77,18 +75,3 @@ def minio_gateway(minio_client: AioBaseClient, config: Config) -> MinioGateway:
 @pytest.fixture
 def zip_gateway() -> ZipGateway:
     return ZipGateway()
-
-
-@pytest_asyncio.fixture
-async def redis_client(config: Config) -> AsyncIterable[Redis]:
-    redis = Redis(host=config.redis.host, port=config.redis.port)
-    await redis.flushdb()
-    try:
-        yield redis
-    finally:
-        await redis.aclose()
-
-
-@pytest.fixture
-def redis_session_gateway(redis_client: Redis, config: Config) -> RedisSessionGateway:
-    return RedisSessionGateway(redis_client=redis_client, config=config.redis)

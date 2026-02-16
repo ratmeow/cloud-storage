@@ -1,11 +1,10 @@
 import re
-import uuid
 from typing import AsyncIterator
 
 from cloud_storage.domain.models import Resource, ResourceType, User
 from cloud_storage.domain.value_objects import Path
 
-from .dto import MoveResourceDTO, SessionDTO, UploadFileDTO, UserRegisterData
+from .dto import MoveResourceDTO, UploadFileDTO, UserRegisterData
 from .exceptions import (
     AlreadyExistsError,
     NotDirectoryError,
@@ -13,7 +12,7 @@ from .exceptions import (
     PasswordRequirementError,
     WrongPasswordError,
 )
-from .interfaces import ArchiveGateway, DBSession, FileStorageGateway, Hasher, SessionGateway, UserGateway
+from .interfaces import ArchiveGateway, DBSession, FileStorageGateway, Hasher, UserGateway
 
 
 class RegisterUserInteractor:
@@ -42,29 +41,18 @@ class RegisterUserInteractor:
 
 
 class LoginUserInteractor:
-    def __init__(self, user_gateway: UserGateway, hasher: Hasher, session_gateway: SessionGateway):
+    def __init__(self, user_gateway: UserGateway, hasher: Hasher):
         self.user_gateway = user_gateway
         self.hasher = hasher
-        self.session_gateway = session_gateway
 
-    async def __call__(self, login_data: UserRegisterData) -> SessionDTO:
+    async def __call__(self, login_data: UserRegisterData) -> str:
         exist_user = await self.user_gateway.get_by_login(login=login_data.login)
         if not exist_user:
             raise NotFoundError(spec=f"User with login {login_data.login}")
 
         if not self.hasher.verify_hash(original_text=login_data.password, hashed_text=exist_user.hashed_password):
             raise WrongPasswordError()
-
-        session = await self.session_gateway.create(user_id=exist_user.id)
-        return session
-
-
-class LogoutUserInteractor:
-    def __init__(self, session_gateway: SessionGateway):
-        self.session_gateway = session_gateway
-
-    async def __call__(self, session_id: str) -> None:
-        return await self.session_gateway.delete(session_id=uuid.UUID(session_id))
+        return str(exist_user.id)
 
 
 class GetResourceInteractor:
@@ -154,6 +142,7 @@ class UploadFileInteractor:
 
         file_path = Path(value=data.target_path)
         file_path_full = user.root_path.join(file_path)
+
         if await self.file_storage_gateway.exists(path=file_path_full):
             raise AlreadyExistsError(spec=f"Resource {str(file_path)}")
 

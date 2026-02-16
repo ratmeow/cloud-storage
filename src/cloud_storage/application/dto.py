@@ -1,5 +1,4 @@
 import datetime
-import uuid
 from dataclasses import dataclass
 
 
@@ -11,8 +10,8 @@ class UserRegisterData:
 
 @dataclass
 class SessionDTO:
-    id: uuid.UUID
-    user_id: uuid.UUID
+    id: str
+    user_id: str
     expired_ts: datetime.datetime
 
 

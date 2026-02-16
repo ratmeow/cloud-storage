@@ -16,6 +16,8 @@ alembic = "^1.17.1"
 redis = "^7.0.1"
 aioboto3 = "^15.5.0"
 asynczipstream = "^1.0.1"
+fastapi = {extras = ["standard-no-fastapi-cloud-cli"], version = "^0.128.1"}
+dishka = "^1.7.2"
 
 
 [tool.poetry.group.test.dependencies]

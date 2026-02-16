@@ -1,0 +1,87 @@
+services:
+
+  dev-postgres:
+    image: "postgres:16-alpine"
+    ports:
+      - ${POSTGRES_PORT}:5432
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - dev-postgres-data:/var/lib/postgresql/data
+
+  dev-redis:
+    image: redis:7.2
+    ports:
+      - ${REDIS_PORT}:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - dev-redis-data:/data
+
+  dev-minio:
+    image: minio/minio
+    entrypoint: sh
+    command: >
+      -c 'mkdir -p /data/"${MINIO_BUCKET}"
+      && minio server /data'
+    ports:
+      - ${MINIO_PORT}:${MINIO_PORT}
+      - ${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}
+    environment:
+      MINIO_ROOT_USER: "${MINIO_LOGIN}"
+      MINIO_ROOT_PASSWORD: "${MINIO_PASSWORD}"
+      MINIO_ADDRESS: ":${MINIO_PORT}"
+      MINIO_CONSOLE_ADDRESS: ":${MINIO_CONSOLE_PORT}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - dev-minio-data:/data
+
+  dev-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - ${APP_PORT:-8000}:8000
+    environment:
+      POSTGRES_HOST: dev-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
+      REDIS_HOST: dev-redis
+      REDIS_PORT: 6379
+      MINIO_HOST: dev-minio
+      MINIO_PORT: 9000
+      MINIO_BUCKET: "${MINIO_BUCKET}"
+      MINIO_LOGIN: "${MINIO_LOGIN}"
+      MINIO_PASSWORD: "${MINIO_PASSWORD}"
+    depends_on:
+      dev-postgres:
+        condition: service_healthy
+      dev-redis:
+        condition: service_healthy
+      dev-minio:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+
+volumes:
+  dev-postgres-data:
+  dev-redis-data:
+  dev-minio-data:
