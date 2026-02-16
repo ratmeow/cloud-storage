@@ -6,10 +6,26 @@ from dishka import AnyOf, Provider, Scope, from_context, provide
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from cloud_storage.application.interactors import CreateDirectoryInteractor, LoginUserInteractor, \
-    RegisterUserInteractor, GetResourceInteractor, DeleteResourceInteractor, DownloadResourceInteractor, \
-    MoveResourceInteractor, SearchResourceInteractor, UploadFileInteractor, ListDirectoryInteractor
-from cloud_storage.application.interfaces import DBSession, FileStorageGateway, Hasher, SessionGateway, UserGateway, ArchiveGateway
+from cloud_storage.application.interactors import (
+    CreateDirectoryInteractor,
+    DeleteResourceInteractor,
+    DownloadResourceInteractor,
+    GetResourceInteractor,
+    ListDirectoryInteractor,
+    LoginUserInteractor,
+    MoveResourceInteractor,
+    RegisterUserInteractor,
+    SearchResourceInteractor,
+    UploadFileInteractor,
+)
+from cloud_storage.application.interfaces import (
+    ArchiveGateway,
+    DBSession,
+    FileStorageGateway,
+    Hasher,
+    SessionGateway,
+    UserGateway,
+)
 from cloud_storage.config import Config
 from cloud_storage.infrastructure.bcrypt_hasher import BcryptHasher
 from cloud_storage.infrastructure.database.gateways import PgUserGateway
@@ -25,7 +41,6 @@ class AppProvider(Provider):
     @provide(scope=Scope.APP)
     def get_hasher(self) -> Hasher:
         return BcryptHasher()
-
 
     @provide(scope=Scope.APP)
     async def get_redis_client(self, config: Config) -> AsyncIterable[Redis]:
