@@ -10,6 +10,7 @@ from .exceptions import (
     NotDirectoryError,
     NotFoundError,
     PasswordRequirementError,
+    UserNotFoundError,
     WrongPasswordError,
 )
 from .interfaces import ArchiveGateway, DBSession, FileStorageGateway, Hasher, UserGateway
@@ -48,7 +49,7 @@ class LoginUserInteractor:
     async def __call__(self, login_data: UserRegisterData) -> str:
         exist_user = await self.user_gateway.get_by_login(login=login_data.login)
         if not exist_user:
-            raise NotFoundError(spec=f"User with login {login_data.login}")
+            raise UserNotFoundError(info=login_data.login)
 
         if not self.hasher.verify_hash(original_text=login_data.password, hashed_text=exist_user.hashed_password):
             raise WrongPasswordError()
@@ -63,12 +64,12 @@ class GetResourceInteractor:
     async def __call__(self, path: str, user_id: str) -> Resource:
         user = await self.user_gateway.get_by_id(user_id=user_id)
         if not user:
-            raise NotFoundError(f"User with id={user_id}")
+            raise UserNotFoundError(info=user_id)
 
         resource_path = Path(value=path)
         resource_full_path = user.root_path.join(resource_path)
         if not await self.file_storage_gateway.exists(path=resource_full_path):
-            raise NotFoundError(f"Resource with path = {str(resource_path)}")
+            raise NotFoundError(f"Resource {str(resource_path)}")
 
         resource = Resource(
             path=resource_path,
@@ -89,12 +90,12 @@ class DeleteResourceInteractor:
     async def __call__(self, path: str, user_id: str) -> None:
         user = await self.user_gateway.get_by_id(user_id=user_id)
         if not user:
-            raise NotFoundError(f"User with id={user_id}")
+            raise UserNotFoundError(info=user_id)
 
         resource_path = Path(value=path)
         resource_full_path = user.root_path.join(resource_path)
         if not await self.file_storage_gateway.exists(path=resource_full_path):
-            raise NotFoundError(f"Resource with path = {str(resource_path)}")
+            raise NotFoundError(f"Resource {str(resource_path)}")
 
         await self.file_storage_gateway.delete(path=resource_full_path)
 
@@ -110,12 +111,12 @@ class DownloadResourceInteractor:
     async def __call__(self, path: str, user_id: str) -> AsyncIterator[bytes]:
         user = await self.user_gateway.get_by_id(user_id=user_id)
         if not user:
-            raise NotFoundError(f"User with id={user_id}")
+            raise UserNotFoundError(info=user_id)
 
         resource_path = Path(value=path)
         resource_full_path = user.root_path.join(resource_path)
         if not await self.file_storage_gateway.exists(path=resource_full_path):
-            raise NotFoundError(f"Resource with path = {str(resource_path)}")
+            raise NotFoundError(f"Resource {str(resource_path)}")
 
         if resource_path.is_directory:
             all_parts = await self.file_storage_gateway.list_directory_recursive(path=resource_full_path)
@@ -138,7 +139,7 @@ class UploadFileInteractor:
     async def __call__(self, data: UploadFileDTO) -> Resource:
         user = await self.user_gateway.get_by_id(user_id=data.user_id)
         if not user:
-            raise NotFoundError(f"User with id={data.user_id}")
+            raise UserNotFoundError(info=data.user_id)
 
         file_path = Path(value=data.target_path)
         file_path_full = user.root_path.join(file_path)
@@ -159,7 +160,7 @@ class CreateDirectoryInteractor:
     async def __call__(self, path: str, user_id: str) -> Resource:
         user = await self.user_gateway.get_by_id(user_id=user_id)
         if not user:
-            raise NotFoundError(f"User with id={user_id}")
+            raise UserNotFoundError(info=user_id)
 
         directory_path = Path(value=path)
         if not directory_path.is_directory:
@@ -181,7 +182,7 @@ class ListDirectoryInteractor:
     async def __call__(self, path: str, user_id: str) -> list[Resource]:
         user = await self.user_gateway.get_by_id(user_id=user_id)
         if not user:
-            raise NotFoundError(f"User with id={user_id}")
+            raise UserNotFoundError(info=user_id)
 
         directory_path = Path(value=path)
         if not directory_path.is_directory:
@@ -189,7 +190,7 @@ class ListDirectoryInteractor:
 
         storage_path = user.root_path.join(directory_path)
         if not await self.file_storage_gateway.exists(path=storage_path):
-            raise NotFoundError(f"Resource with path = {str(storage_path)}")
+            raise NotFoundError(f"Directory {str(directory_path)}")
 
         child_paths = await self.file_storage_gateway.list_directory(path=storage_path)
         resources = []
@@ -214,7 +215,7 @@ class SearchResourceInteractor:
     async def __call__(self, resource_name: str, user_id: str) -> list[Resource]:
         user = await self.user_gateway.get_by_id(user_id=user_id)
         if not user:
-            raise NotFoundError(f"User with id={user_id}")
+            raise UserNotFoundError(info=user_id)
 
         all_res = await self.file_storage_gateway.list_directory_recursive(path=user.root_path)
         result = []
@@ -239,12 +240,12 @@ class MoveResourceInteractor:
     async def __call__(self, data: MoveResourceDTO) -> Resource:
         user = await self.user_gateway.get_by_id(user_id=data.user_id)
         if not user:
-            raise NotFoundError(f"User with id={data.user_id}")
+            raise UserNotFoundError(info=data.user_id)
 
         current_path_full = user.root_path.join(data.current_path)
         target_path_full = user.root_path.join(data.target_path)
         if not await self.file_storage_gateway.exists(path=current_path_full):
-            raise NotFoundError(f"Resource with path = {str(data.current_path)}")
+            raise NotFoundError(f"Resource {str(data.current_path)}")
 
         if await self.file_storage_gateway.exists(path=target_path_full):
             raise AlreadyExistsError(spec=f"Directory {data.target_path}")

@@ -7,6 +7,7 @@ from cloud_storage.application.exceptions import (
     NotDirectoryError,
     NotFoundError,
     PasswordRequirementError,
+    UserNotFoundError,
     WrongPasswordError,
 )
 from cloud_storage.domain.exceptions import DomainError
@@ -36,5 +37,6 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AlreadyExistsError, ExceptionResponseFactory(409))
     app.add_exception_handler(WrongPasswordError, ExceptionResponseFactory(401))
     app.add_exception_handler(UnauthorizedError, ExceptionResponseFactory(401))
+    app.add_exception_handler(UserNotFoundError, ExceptionResponseFactory(401))
     app.add_exception_handler(ApplicationError, ExceptionResponseFactory(500))
     app.add_exception_handler(Exception, ExceptionResponseFactory(500))

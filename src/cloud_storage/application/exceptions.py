@@ -16,6 +16,11 @@ class NotFoundError(ApplicationError):
         super().__init__(message=f"{spec} Not Found")
 
 
+class UserNotFoundError(NotFoundError):
+    def __init__(self, info: str = ""):
+        super().__init__(spec=f"User {info}")
+
+
 class WrongPasswordError(ApplicationError):
     def __init__(self):
         super().__init__(message="Wrong Password!")
