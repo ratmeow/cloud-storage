@@ -23,7 +23,6 @@ from cloud_storage.application.interfaces import (
     DBSession,
     FileStorageGateway,
     Hasher,
-    SessionGateway,
     UserGateway,
 )
 from cloud_storage.config import Config
@@ -31,7 +30,8 @@ from cloud_storage.infrastructure.bcrypt_hasher import BcryptHasher
 from cloud_storage.infrastructure.database.gateways import PgUserGateway
 from cloud_storage.infrastructure.database.session import pg_session_maker
 from cloud_storage.infrastructure.minio_gateway import MinioGateway
-from cloud_storage.infrastructure.redis_gateway import RedisSessionGateway
+from cloud_storage.infrastructure.web_session.interfaces import SessionGateway
+from cloud_storage.infrastructure.web_session.redis_gateway import RedisSessionGateway
 from cloud_storage.infrastructure.zip_gateway import ZipGateway
 
 

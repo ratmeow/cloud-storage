@@ -3,8 +3,6 @@ from typing import AsyncIterator, Protocol
 from cloud_storage.domain.models import User
 from cloud_storage.domain.value_objects import Path
 
-from .dto import SessionDTO
-
 
 class Hasher(Protocol):
     def hash(self, text: str) -> str:
@@ -27,17 +25,6 @@ class UserGateway(Protocol):
         pass
 
     async def save(self, user: User) -> None:
-        pass
-
-
-class SessionGateway(Protocol):
-    async def create(self, user_id: str) -> SessionDTO:
-        pass
-
-    async def get_user_id(self, session_id: str) -> str:
-        pass
-
-    async def delete(self, session_id: str) -> None:
         pass
 
 

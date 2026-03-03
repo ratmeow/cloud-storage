@@ -1,4 +1,3 @@
-import datetime
 from dataclasses import dataclass
 
 
@@ -6,13 +5,6 @@ from dataclasses import dataclass
 class UserRegisterData:
     login: str
     password: str
-
-
-@dataclass
-class SessionDTO:
-    id: str
-    user_id: str
-    expired_ts: datetime.datetime
 
 
 @dataclass

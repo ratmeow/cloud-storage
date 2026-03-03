@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, Form, Request, Response, UploadFile
 from fastapi.responses import StreamingResponse
 from starlette.responses import JSONResponse
 
@@ -18,8 +18,9 @@ from cloud_storage.application.interactors import (
     SearchResourceInteractor,
     UploadFileInteractor,
 )
-from cloud_storage.application.interfaces import SessionGateway
+from cloud_storage.infrastructure.web_session.interfaces import SessionGateway
 
+from .exceptions import UnauthorizedError
 from .schemas import ResourceResponse, UserRegisterRequest
 
 router = APIRouter(prefix="/api")
@@ -27,7 +28,7 @@ router = APIRouter(prefix="/api")
 
 def get_session_id(request: Request) -> str:
     if not request.cookies.get("session_id", False):
-        raise HTTPException(status_code=401)
+        raise UnauthorizedError
     return request.cookies["session_id"]
 
 

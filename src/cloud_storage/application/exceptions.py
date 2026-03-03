@@ -1,5 +1,5 @@
 class ApplicationError(Exception):
-    def __init__(self, message: str):
+    def __init__(self, message: str = "Internal Server Error"):
         self.message = message
 
 
