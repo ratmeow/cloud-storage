@@ -7,6 +7,7 @@ from cloud_storage.ioc import AppProvider
 from cloud_storage.logger import setup_package_logger
 from cloud_storage.presentation.exceptions import register_exception_handlers
 from cloud_storage.presentation.handlers import router
+from cloud_storage.presentation.middlewares import register_middlewares
 
 
 def create_app():
@@ -16,6 +17,7 @@ def create_app():
     app = FastAPI()
     app.include_router(router)
 
+    register_middlewares(app=app)
     register_exception_handlers(app=app)
     container = make_async_container(AppProvider(), context={Config: config})
     setup_dishka(container=container, app=app)
