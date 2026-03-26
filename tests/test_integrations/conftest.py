@@ -4,6 +4,8 @@ import aioboto3
 import pytest
 import pytest_asyncio
 from aiobotocore.client import AioBaseClient
+from httpx import ASGITransport, AsyncClient
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import registry
 
@@ -14,6 +16,7 @@ from cloud_storage.infrastructure.database.gateways import PgUserGateway
 from cloud_storage.infrastructure.database.orm import create_mapper_registry
 from cloud_storage.infrastructure.minio_gateway import MinioGateway
 from cloud_storage.infrastructure.zip_gateway import ZipGateway
+from cloud_storage.main import create_app
 
 
 @pytest.fixture(scope="session")
@@ -67,6 +70,15 @@ async def minio_client(minio_session: aioboto3.Session, config: Config) -> Async
         yield s3
 
 
+@pytest_asyncio.fixture(scope="session")
+async def redis_client(config: Config) -> AsyncIterable[Redis]:
+    redis = Redis(host=config.redis.host, port=config.redis.port)
+    try:
+        yield redis
+    finally:
+        await redis.aclose()
+
+
 @pytest.fixture
 def minio_gateway(minio_client: AioBaseClient, config: Config) -> MinioGateway:
     return MinioGateway(client=minio_client, config=config.minio)
@@ -75,3 +87,15 @@ def minio_gateway(minio_client: AioBaseClient, config: Config) -> MinioGateway:
 @pytest.fixture
 def zip_gateway() -> ZipGateway:
     return ZipGateway()
+
+
+@pytest.fixture
+def app():
+    return create_app()
+
+
+@pytest_asyncio.fixture
+async def http_client(app) -> AsyncIterable[AsyncClient]:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        yield client

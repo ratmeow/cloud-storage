@@ -20,12 +20,12 @@ class User:
         if not self._is_valid_login(self.login):
             raise DomainError(
                 "Login must be at least 3 characters long, "
-                "with only Latin letters, digits and special character(!@#$%^&*)."
+                "with only Latin letters, digits and special character(!@#$%^&*_)."
             )
 
     @staticmethod
     def _is_valid_login(login: str) -> bool:
-        pattern = r"^[A-Za-z\d!@#$%^&*]{3,}$"
+        pattern = r"^[A-Za-z\d!@#$%^&*_]{3,}$"
         return bool(re.fullmatch(pattern, login))
 
     @property
