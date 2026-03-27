@@ -8,3 +8,5 @@ pycache/
 .env
 venv/
 .python-version
+__pycache__/
+poetry.toml

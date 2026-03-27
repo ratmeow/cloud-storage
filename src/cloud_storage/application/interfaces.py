@@ -35,7 +35,7 @@ class FileStorageGateway(Protocol):
     async def get_file(self, path: Path) -> bytes:
         pass
 
-    async def get_file_stream(self, path: Path) -> AsyncIterator[bytes]:
+    def get_file_stream(self, path: Path) -> AsyncIterator[bytes]:
         pass
 
     async def delete(self, path: Path) -> None:

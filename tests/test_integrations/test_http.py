@@ -2,6 +2,7 @@ import uuid
 
 import pytest
 import pytest_asyncio
+from aiobotocore.client import AioBaseClient
 from httpx import AsyncClient
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -58,10 +59,9 @@ class TestSession:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_use(self, http_client: AsyncClient, existing_user: User):
+    async def test_use(self, http_client: AsyncClient, minio_client: AioBaseClient, existing_user: User):
         sign_in_response = await sign_in(http_client=http_client, login=existing_user.login, password="password_1")
         protected_response = await http_client.post("/api/directory", params={"path": "folder1/"})
-
         assert sign_in_response.status_code == 200
         assert protected_response.status_code == 200
         assert protected_response.json() == {"path": "", "name": "folder1", "type": "directory", "size": None}

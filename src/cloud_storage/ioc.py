@@ -5,6 +5,7 @@ from aiobotocore.client import AioBaseClient
 from dishka import AnyOf, Provider, Scope, from_context, provide
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import registry
 
 from cloud_storage.application.interactors import (
     CreateDirectoryInteractor,
@@ -28,6 +29,7 @@ from cloud_storage.application.interfaces import (
 from cloud_storage.config import Config
 from cloud_storage.infrastructure.bcrypt_hasher import BcryptHasher
 from cloud_storage.infrastructure.database.gateways import PgUserGateway
+from cloud_storage.infrastructure.database.orm import create_mapper_registry
 from cloud_storage.infrastructure.database.session import pg_session_maker
 from cloud_storage.infrastructure.minio_gateway import MinioGateway
 from cloud_storage.infrastructure.web_session.interfaces import SessionGateway
@@ -37,6 +39,10 @@ from cloud_storage.infrastructure.zip_gateway import ZipGateway
 
 class AppProvider(Provider):
     config = from_context(provides=Config, scope=Scope.APP)
+
+    @provide(scope=Scope.APP)
+    def get_mapper_registry(self) -> registry:
+        return create_mapper_registry()
 
     @provide(scope=Scope.APP)
     def get_hasher(self) -> Hasher:
@@ -74,7 +80,7 @@ class AppProvider(Provider):
         return ZipGateway()
 
     @provide(scope=Scope.APP)
-    def get_session_maker(self, config: Config) -> async_sessionmaker[AsyncSession]:
+    def get_session_maker(self, config: Config, mapper_registry: registry) -> async_sessionmaker[AsyncSession]:
         return pg_session_maker(pg_config=config.postgres)
 
     @provide(scope=Scope.REQUEST)

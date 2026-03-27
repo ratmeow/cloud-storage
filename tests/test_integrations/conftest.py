@@ -4,6 +4,9 @@ import aioboto3
 import pytest
 import pytest_asyncio
 from aiobotocore.client import AioBaseClient
+from dishka import make_async_container
+from dishka.integrations.fastapi import setup_dishka
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -16,7 +19,9 @@ from cloud_storage.infrastructure.database.gateways import PgUserGateway
 from cloud_storage.infrastructure.database.orm import create_mapper_registry
 from cloud_storage.infrastructure.minio_gateway import MinioGateway
 from cloud_storage.infrastructure.zip_gateway import ZipGateway
-from cloud_storage.main import create_app
+from cloud_storage.ioc import AppProvider
+from cloud_storage.presentation.exceptions import register_exception_handlers
+from cloud_storage.presentation.handlers import router
 
 
 @pytest.fixture(scope="session")
@@ -39,7 +44,7 @@ async def session_maker_pg(config: Config, mapper_registry: registry) -> async_s
 
 
 @pytest_asyncio.fixture
-async def pg_session(session_maker_pg) -> AsyncIterable[AsyncSession | DBSession]:
+async def pg_session(session_maker_pg: async_sessionmaker) -> AsyncIterable[AsyncSession | DBSession]:
     async with session_maker_pg() as session:
         yield session
 
@@ -70,7 +75,7 @@ async def minio_client(minio_session: aioboto3.Session, config: Config) -> Async
         yield s3
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def redis_client(config: Config) -> AsyncIterable[Redis]:
     redis = Redis(host=config.redis.host, port=config.redis.port)
     try:
@@ -90,8 +95,14 @@ def zip_gateway() -> ZipGateway:
 
 
 @pytest.fixture
-def app():
-    return create_app()
+def app(config: Config, mapper_registry: registry):
+    app = FastAPI()
+    app.include_router(router)
+
+    register_exception_handlers(app=app)
+    container = make_async_container(AppProvider(), context={Config: config, registry: mapper_registry})
+    setup_dishka(container=container, app=app)
+    return app
 
 
 @pytest_asyncio.fixture
