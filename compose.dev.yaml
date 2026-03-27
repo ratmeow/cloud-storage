@@ -82,6 +82,15 @@ services:
     volumes:
       - ./src:/app/src
 
+  dev-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - 3000:80
+    depends_on:
+      - dev-backend
+
 volumes:
   dev-postgres-data:
   dev-redis-data:

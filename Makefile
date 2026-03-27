@@ -21,11 +21,14 @@ test-docker:
 dev-infra-up:
 	docker compose -f compose.dev.yaml --env-file dev.env up -d dev-postgres dev-redis dev-minio
 
-dev-infra-down:
+dev-down:
 	docker compose -f compose.dev.yaml --env-file dev.env down
 
-dev-run:
+dev-run-backend:
 	docker compose -f compose.dev.yaml --env-file dev.env up --build dev-backend
+
+dev-run-frontend:
+	docker compose -f compose.dev.yaml --env-file dev.env up --build dev-frontend
 
 start-app:
 	export $$(cat dev.env | xargs) && alembic upgrade head && uvicorn cloud_storage.main:create_app --host "0.0.0.0" --port 8080

@@ -32,14 +32,14 @@ def get_session_id(request: Request) -> str:
     return request.cookies["session_id"]
 
 
-@router.post("/sign-up")
+@router.post("/auth/sign-up")
 @inject
 async def register_user(data: Annotated[UserRegisterRequest, Form()], use_case: FromDishka[RegisterUserInteractor]):
     await use_case(register_data=UserRegisterData(login=data.login, password=data.password))
     return Response(status_code=200)
 
 
-@router.post("/sign-in")
+@router.post("/auth/sign-in")
 @inject
 async def login_user_api(
     data: Annotated[UserRegisterRequest, Form()],
@@ -54,7 +54,7 @@ async def login_user_api(
     return response
 
 
-@router.post("/sign-out")
+@router.post("/auth/sign-out")
 @inject
 async def logout_user_api(session_gateway: FromDishka[SessionGateway], session_id: str = Depends(get_session_id)):
     await session_gateway.delete(session_id=session_id)
