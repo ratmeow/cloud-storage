@@ -66,6 +66,7 @@ services:
       POSTGRES_DB: "${POSTGRES_DB}"
       REDIS_HOST: dev-redis
       REDIS_PORT: 6379
+      REDIS_SESSION_LIFETIME_SEC: "${REDIS_SESSION_LIFETIME_SEC}"
       MINIO_HOST: dev-minio
       MINIO_PORT: 9000
       MINIO_BUCKET: "${MINIO_BUCKET}"

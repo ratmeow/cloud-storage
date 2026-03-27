@@ -3,7 +3,6 @@ name = "cloud-storage"
 version = "0.1.0"
 description = ""
 authors = ["ratmeow <rtm_bis@mail.ru>"]
-readme = "README.md"
 packages = [{include = "cloud_storage", from = "src"}]
 
 [tool.poetry.dependencies]
